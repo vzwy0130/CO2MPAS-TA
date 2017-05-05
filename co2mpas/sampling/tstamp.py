@@ -56,6 +56,7 @@ class TstampSpec(dice.DiceSpec):
             If undefined, does its best.
         """).tag(config=True)
 
+    ## TODO: delete deprecated trait
     ssl = trt.Bool(
         True,
         help="""Connect securely using TLS/SSL with SMTP/IMAP server; configure `port` separately!"""
@@ -220,7 +221,7 @@ class TstampSender(TstampSpec):
     ## TODO: delete deprecated trait
     x_recipients = trt.List(
         trt.Unicode(),
-        help="Deprecated, but still functional.  Prefer `--TstampSender.tstamp_recipients` list  instead."
+        help="Deprecated, but still functional.  Prefer `TstampSender.tstamp_recipients` list  instead."
     ).tag(config=True)
 
     subject = trt.Unicode(
@@ -241,7 +242,7 @@ class TstampSender(TstampSpec):
             ['host', 'subject', 'tstamp_recipients'])
         self._register_validator(
             DiceSpec._warn_deprecated, 
-            ['x_recipients', 'timestamping_addresses'])
+            ['x_recipients', 'timestamping_addresses', 'ssl'])
         super().__init__(*args, **kwds)
 
     ## TODO: delete deprecated trait
@@ -252,7 +253,7 @@ class TstampSender(TstampSpec):
                 if a]
         if not adrs:
             myname = type(self).__name__
-            raise trt.TraitError('One of `%s.timestamping_addresses` and ``%s.tstamper_address` must not be empty!'
+            raise trt.TraitError('One of `%s.tstamper_address` and ``%s.timestamping_addresses` must not be empty!'
                                  % (myname, myname))
         return adrs
 
@@ -260,6 +261,11 @@ class TstampSender(TstampSpec):
         x_recs = '\n'.join('X-Stamper-To: %s' % rec
                            for rec
                            in self.tstamp_recipients + self.x_recipients)
+        if not x_recs:
+            myname = type(self).__name__
+            raise trt.TraitError('One of `%s.tstamp_recipients` and ``%s.x_recipients` must not be empty!'
+                                 % (myname, myname))
+            
         msg = "%s\n\n%s" % (x_recs, msg)
 
         return msg
